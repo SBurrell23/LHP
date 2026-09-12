@@ -411,7 +411,7 @@ kbd { font: 11px/1 var(--sans); border: 1px solid var(--line); border-bottom-wid
 .abcjs-chord { font-weight: 600; }
 .sheet .abcjs-note, .sheet .abcjs-rest { cursor: pointer; }
 .sheet .abcjs-note:hover * { fill: var(--note-hover); }
-.note-name { font: 600 7.5px var(--sans); fill: currentColor; opacity: 0.6; pointer-events: none; }
+.note-name { font: 600 9px var(--sans); fill: currentColor; opacity: 0.65; pointer-events: none; }
 .abcjs-highlight, .abcjs-highlight * { fill: var(--accent) !important; }
 .abcjs-highlight.abcjs-note { filter: drop-shadow(0 0 3px rgba(80, 70, 200, 0.5)); }
 
@@ -444,3 +444,6 @@ kbd { font: 11px/1 var(--sans); border: 1px solid var(--line); border-bottom-wid
   .layout { display: block; padding: 0; }
   .sheet { border: none; box-shadow: none; padding: 0; min-height: 0; max-width: none; }
 }
+
+/* Triplet figures are obvious from the beaming; the "3" markers only clutter the space under the staff. */
+.sheet .abcjs-triplet { display: none; }

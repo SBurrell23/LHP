@@ -315,7 +315,7 @@
       names.forEach((name, j) => {
         const t = document.createElementNS(ns, 'text');
         t.setAttribute('class', 'note-name');
-        t.setAttribute('x', bb.x + bb.width / 2); t.setAttribute('y', bb.y + bb.height + 7.5 + j * 7.5);
+        t.setAttribute('x', bb.x + bb.width / 2); t.setAttribute('y', bb.y + bb.height + 9 + j * 9);
         t.setAttribute('text-anchor', 'middle'); t.textContent = name;
         svg.appendChild(t);
       });
