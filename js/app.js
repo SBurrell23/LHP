@@ -260,6 +260,7 @@
       },
     });
     visualObj = rendered[0];
+    colorNotes();
     labelNotes();
     $('abc-source').value = tune.abc;
     $('seed').textContent = tune.seed;
@@ -295,38 +296,80 @@
   // ---- note names under the staff (for readers new to the bass clef) ----
   // Pairs every rendered note (in order) with the generator's spelled names and
   // draws small letters below it; chords get one letter per note, high to low.
-  function labelNotes() {
-    const svg = document.querySelector('#sheet svg');
-    if (!svg) return;
-    svg.querySelectorAll('.note-name').forEach(el => el.remove());
-    if ($('names-on').getAttribute('aria-pressed') !== 'true' || !visualObj || !current) return;
+  // Every rendered note element paired, in order, with the generator's event
+  // (which carries the spelled names of its pitches, lowest first).
+  function pairNotes() {
+    if (!visualObj || !current) return [];
     const elems = [];
     visualObj.lines.forEach(line => (line.staff || []).forEach(st => (st.voices || []).forEach(v => v.forEach(el => {
       if (el.el_type === 'note' && !el.rest && el.abselem && el.abselem.elemset && el.abselem.elemset[0]) elems.push(el);
     }))));
     const events = [];
-    current.sections.forEach(s => s.bars.forEach(b => b.events.forEach(e => { if (!e.rest) events.push(e); })));
-    if (elems.length !== events.length) return; // don't guess if the counts disagree
+    current.sections.forEach(sec => sec.bars.forEach(bar => bar.events.forEach(e => { if (!e.rest) events.push(e); })));
+    if (elems.length !== events.length) return []; // don't guess if the counts disagree
+    return elems.map((el, i) => ({ el, event: events[i] }));
+  }
+  // Chroma-Notes colours by letter name (accidentals share their letter's colour).
+  const NOTE_COLORS = { C: '#e5383b', D: '#f48c06', E: '#d9b514', F: '#2a9d8f', G: '#1b9aaa', A: '#3a6ff7', B: '#9d4edd' };
+  const colorOf = name => NOTE_COLORS[name.charAt(0)] || 'currentColor';
+  const colorsOn = () => $('colors-on').getAttribute('aria-pressed') === 'true';
+
+  function labelNotes() {
+    const svg = document.querySelector('#sheet svg');
+    if (!svg) return;
+    svg.querySelectorAll('.note-name').forEach(el => el.remove());
+    if ($('names-on').getAttribute('aria-pressed') !== 'true') return;
     const ns = 'http://www.w3.org/2000/svg';
-    elems.forEach((el, i) => {
+    pairNotes().forEach(({ el, event }) => {
       const g = el.abselem.elemset[0];
       let bb; try { bb = g.getBBox(); } catch (e) { return; }
-      const names = (events[i].names || []).slice().reverse(); // highest note first
+      const names = (event.names || []).slice().reverse(); // highest note first
       names.forEach((name, j) => {
         const t = document.createElementNS(ns, 'text');
         t.setAttribute('class', 'note-name');
         t.setAttribute('x', bb.x + bb.width / 2); t.setAttribute('y', bb.y + bb.height + 9 + j * 9);
         t.setAttribute('text-anchor', 'middle'); t.textContent = name;
+        if (colorsOn()) { t.style.fill = colorOf(name); t.style.opacity = '0.95'; }
         svg.appendChild(t);
       });
     });
   }
+
+  // Tint each notehead by its letter: abcjs keeps one notehead glyph per pitch,
+  // in ascending pitch order, matching the event's names.
+  function colorNotes() {
+    const svg = document.querySelector('#sheet svg');
+    if (!svg) return;
+    svg.querySelectorAll('.note-colored').forEach(p => { p.classList.remove('note-colored'); p.style.fill = ''; });
+    $('color-legend').hidden = !colorsOn();
+    if (!colorsOn()) return;
+    pairNotes().forEach(({ el, event }) => {
+      const heads = (el.abselem.children || []).filter(ch => ch.c && /^noteheads\./.test(ch.c) && ch.graphelem);
+      const names = event.names || [];
+      if (heads.length !== names.length) return;
+      heads.forEach((ch, i) => { ch.graphelem.classList.add('note-colored'); ch.graphelem.style.fill = colorOf(names[i]); });
+    });
+  }
+  (function buildLegend() {
+    const leg = $('color-legend');
+    for (const [letter, color] of Object.entries(NOTE_COLORS)) {
+      const chip = document.createElement('span'); chip.className = 'legend-chip'; chip.style.background = color; chip.textContent = letter;
+      leg.appendChild(chip);
+    }
+  })();
   $('names-on').addEventListener('click', () => {
     const b = $('names-on'); const on = b.getAttribute('aria-pressed') !== 'true';
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
     try { localStorage.setItem('lhp-names', on ? '1' : '0'); } catch (e) { /* ignore */ }
     labelNotes();
   });
+  $('colors-on').addEventListener('click', () => {
+    const b = $('colors-on'); const on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    try { localStorage.setItem('lhp-colors', on ? '1' : '0'); } catch (e) { /* ignore */ }
+    colorNotes(); labelNotes();
+  });
+  try { if (localStorage.getItem('lhp-colors') === '1') $('colors-on').setAttribute('aria-pressed', 'true'); } catch (e) { /* ignore */ }
   try { if (localStorage.getItem('lhp-names') === '1') $('names-on').setAttribute('aria-pressed', 'true'); } catch (e) { /* ignore */ }
 
   // ---- playback with a moving highlight ----
@@ -417,70 +460,6 @@
     showBpm(bpm);
   }
 
-  // ---- saved sheets (localStorage) ----
-  const SAVED_KEY = 'lsg-saved';
-  const readSaved = () => { try { const v = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
-  const writeSaved = list => { try { localStorage.setItem(SAVED_KEY, JSON.stringify(list)); } catch (e) { /* storage full or blocked */ } };
-  const sheetId = t => [t.chordsLevel, t.seed, keySelect.value || '', typeSelect.value || ''].join('|');
-  const findSaved = t => readSaved().findIndex(s => s.id === sheetId(t));
-
-  function updateSaveButton() {
-    const saved = current ? findSaved(current) >= 0 : false;
-    $('save').setAttribute('aria-pressed', saved ? 'true' : 'false');
-    $('save-label').textContent = saved ? 'Saved' : 'Save';
-    $('save').title = saved ? 'Remove from saved sheets' : 'Save this sheet';
-    $('saved-count').textContent = readSaved().length;
-  }
-
-  function toggleSave() {
-    if (!current) return;
-    const list = readSaved();
-    const i = list.findIndex(s => s.id === sheetId(current));
-    if (i >= 0) list.splice(i, 1);
-    else list.unshift({
-      id: sheetId(current), title: current.title, chords: current.chordsLevel,
-      seed: current.seed, key: keySelect.value || '', pattern: typeSelect.value || '',
-      keyName: pretty(current.key.name.replace(/m$/, '')) + (current.key.mode === 'minor' ? ' minor' : ' major'),
-      time: current.meter, feel: current.feelName, tempo: current.tempo, savedAt: Date.now(),
-    });
-    writeSaved(list);
-    updateSaveButton();
-  }
-
-  function loadSaved(entry) {
-    chordsInput.value = entry.chords;
-    keySelect.value = entry.key || ''; typeSelect.value = entry.pattern || '';
-    syncDropdowns(); syncTypeButton();
-    updateLevelText();
-    closeModal();
-    generate(entry.seed);
-  }
-
-  function renderSavedList() {
-    const list = readSaved();
-    const ul = $('saved-list');
-    ul.innerHTML = '';
-    $('saved-empty').hidden = list.length > 0;
-    const fmtDate = ts => new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    for (const e of list) {
-      const li = document.createElement('li'); li.className = 'saved-item';
-      const open = document.createElement('button'); open.type = 'button'; open.className = 'saved-open';
-      const levels = 'Chords ' + e.chords;
-      open.innerHTML = '<span class="t"></span><span class="m"><b></b> · ' + '</span>';
-      open.querySelector('.t').textContent = e.title;
-      open.querySelector('.m b').textContent = levels;
-      open.querySelector('.m').append(document.createTextNode([e.keyName, e.time, e.feel + ' ♩=' + e.tempo, 'saved ' + fmtDate(e.savedAt)].join(' · ')));
-      open.addEventListener('click', () => loadSaved(e));
-      const rm = document.createElement('button'); rm.type = 'button'; rm.className = 'saved-remove'; rm.textContent = '×';
-      rm.title = 'Remove'; rm.setAttribute('aria-label', 'Remove ' + e.title);
-      rm.addEventListener('click', ev => { ev.stopPropagation(); writeSaved(readSaved().filter(s => s.id !== e.id)); renderSavedList(); updateSaveButton(); });
-      li.append(open, rm); ul.appendChild(li);
-    }
-  }
-
-  function openModal() { renderSavedList(); $('saved-modal').hidden = false; $('saved-modal').querySelector('.modal-close').focus(); }
-  function closeModal() { $('saved-modal').hidden = true; }
-
   // ---- generation ----
   function generate(seed) {
     const chords = parseInt(chordsInput.value, 10);
@@ -494,7 +473,6 @@
     updateLevelText();
     writeUrl(current);
     render(current);
-    updateSaveButton();
   }
 
   // ---- events ----
@@ -519,16 +497,12 @@
     const v = parseInt($('seed-input').value.trim(), 10);
     if (Number.isFinite(v)) generate(v >>> 0);
   });
-  $('save').addEventListener('click', toggleSave);
-  $('open-saved').addEventListener('click', openModal);
-  $('saved-modal').addEventListener('click', ev => { if (ev.target.closest('[data-close]')) closeModal(); });
   document.addEventListener('keydown', ev => {
     if (ev.target.closest && ev.target.closest('.dd')) return; // dropdown handles its own keys
     if (ev.key === 'Escape' && !typeModal.hidden) { closeTypeModal(); return; }
-    if (ev.key === 'Escape' && !$('saved-modal').hidden) { closeModal(); return; }
     if (ev.key === 'Escape' && !$('tempo-modal').hidden) { $('tempo-modal').hidden = true; return; }
     if (ev.target.matches('input, textarea, select')) return;
-    if (!$('saved-modal').hidden || !$('tempo-modal').hidden || !typeModal.hidden) return;
+    if (!$('tempo-modal').hidden || !typeModal.hidden) return;
     if (ev.key === 'n' || ev.key === 'N') generate();
     if (ev.key === ' ' && synthControl) { ev.preventDefault(); synthControl.play(); }
   });
