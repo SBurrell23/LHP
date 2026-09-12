@@ -152,6 +152,8 @@ const LHP = (() => {
             return accStr + ap.name;
           });
           prevPitch = e.pitches[0];
+          // Plain note names for the on-sheet labels (true accidentals, key signature included).
+          e.names = e.pitches.map(p => { const sp = spellNote(p, e.chord, sec.key, null); return sp.letter + ({ '-2': '𝄫', '-1': '♭', '0': '', '1': '♯', '2': '𝄪' })[sp.acc]; });
           barStr += (toks.length > 1 ? '[' + toks.join('') + ']' : toks[0]) + len;
         });
         line += barStr;

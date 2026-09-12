@@ -25,6 +25,7 @@ Then open http://localhost:8766. Notation and playback use [abcjs](https://githu
   - 6/8: 6/8 Rolling, 6/8 Lilt
   Hover a tile (or tap its ⓘ) to read what the pattern is and where it is used.
 - **Play along** plays the written left-hand part on piano, with optional right-hand chords on the off-beats for context. The ♩= button opens a tempo slider, clicking any note starts playback from there, and the note being played is highlighted.
+- **Names** (top-left of the score) writes the letter name under every note, for anyone still learning the bass clef.
 - **Save** keeps a sheet in the browser; **Saved** lists them to reopen or remove. **Copy link** shares the exact sheet (`?chords=5&seed=123&key=F&pattern=Walking%20Bass`). **Print / PDF** prints just the sheet. Dark mode inverts the score too.
 
 ## How it works

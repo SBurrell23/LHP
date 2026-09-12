@@ -260,6 +260,7 @@
       },
     });
     visualObj = rendered[0];
+    labelNotes();
     $('abc-source').value = tune.abc;
     $('seed').textContent = tune.seed;
     $('meta-key').textContent = pretty(tune.key.name.replace(/m$/, '')) + (tune.key.mode === 'minor' ? ' minor' : ' major')
@@ -290,6 +291,43 @@
       if (!synthControl.isStarted) return synthControl.play();
     })).catch(err => console.warn('Seek problem:', err));
   }
+
+  // ---- note names under the staff (for readers new to the bass clef) ----
+  // Pairs every rendered note (in order) with the generator's spelled names and
+  // draws small letters below it; chords get one letter per note, high to low.
+  function labelNotes() {
+    const svg = document.querySelector('#sheet svg');
+    if (!svg) return;
+    svg.querySelectorAll('.note-name').forEach(el => el.remove());
+    if ($('names-on').getAttribute('aria-pressed') !== 'true' || !visualObj || !current) return;
+    const elems = [];
+    visualObj.lines.forEach(line => (line.staff || []).forEach(st => (st.voices || []).forEach(v => v.forEach(el => {
+      if (el.el_type === 'note' && !el.rest && el.abselem && el.abselem.elemset && el.abselem.elemset[0]) elems.push(el);
+    }))));
+    const events = [];
+    current.sections.forEach(s => s.bars.forEach(b => b.events.forEach(e => { if (!e.rest) events.push(e); })));
+    if (elems.length !== events.length) return; // don't guess if the counts disagree
+    const ns = 'http://www.w3.org/2000/svg';
+    elems.forEach((el, i) => {
+      const g = el.abselem.elemset[0];
+      let bb; try { bb = g.getBBox(); } catch (e) { return; }
+      const names = (events[i].names || []).slice().reverse(); // highest note first
+      names.forEach((name, j) => {
+        const t = document.createElementNS(ns, 'text');
+        t.setAttribute('class', 'note-name');
+        t.setAttribute('x', bb.x + bb.width / 2); t.setAttribute('y', bb.y + bb.height + 7.5 + j * 7.5);
+        t.setAttribute('text-anchor', 'middle'); t.textContent = name;
+        svg.appendChild(t);
+      });
+    });
+  }
+  $('names-on').addEventListener('click', () => {
+    const b = $('names-on'); const on = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    try { localStorage.setItem('lhp-names', on ? '1' : '0'); } catch (e) { /* ignore */ }
+    labelNotes();
+  });
+  try { if (localStorage.getItem('lhp-names') === '1') $('names-on').setAttribute('aria-pressed', 'true'); } catch (e) { /* ignore */ }
 
   // ---- playback with a moving highlight ----
   function clearHighlights() {

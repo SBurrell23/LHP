@@ -3,28 +3,28 @@
    (including the score, which abcjs paints with currentColor). */
 :root {
   color-scheme: light;
-  --bg: #eef1f6;
+  --bg: #eff0f7;
   --paper: #fbfcfe;
   --sheet: #ffffff;
   --ink: #1a1f2b;
   --muted: #5e6675;
-  --line: #d9dfea;
+  --line: #dbddec;
   --hover: #f1f4f9;
   --soft: #eaeef5;
   --soft2: #e6ebf3;
-  --sand: #b9c4d6;
-  --sand2: #cbd4e3;
-  --sand-line: #b3bfd3;
-  --accent: #2f5fa8;
-  --accent-hover: #264e8c;
+  --sand: #bbbfd8;
+  --sand2: #cdd0e5;
+  --sand-line: #b6b9d5;
+  --accent: #5046c8;
+  --accent-hover: #4038a8;
   --accent-ink: #fff;
-  --accent-soft: #e1e9f7;
-  --accent-deep: #1e3f75;
-  --accent-line: #b7c8e6;
-  --tip-accent: #bcd0f2;
-  --note-hover: #4a6a9a;
+  --accent-soft: #e7e4f9;
+  --accent-deep: #2e2985;
+  --accent-line: #c3bfec;
+  --tip-accent: #cbc6f4;
+  --note-hover: #6d65bd;
   --shadow-rgb: 20, 30, 50;
-  --backdrop: rgba(20, 26, 40, 0.45);
+  --backdrop: rgba(24, 22, 48, 0.45);
   --radius: 14px;
   --shadow: 0 10px 30px rgba(var(--shadow-rgb), 0.10), 0 1px 3px rgba(var(--shadow-rgb), 0.08);
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -44,14 +44,14 @@
   --sand: #4d5a72;
   --sand2: #39455a;
   --sand-line: #465369;
-  --accent: #5b8def;
-  --accent-hover: #7aa3f5;
+  --accent: #8b82f2;
+  --accent-hover: #a39bf6;
   --accent-ink: #fff;
-  --accent-soft: #1c2a44;
-  --accent-deep: #cfdcf6;
-  --accent-line: #2f4a78;
-  --tip-accent: #2f5fa8;
-  --note-hover: #9db8e8;
+  --accent-soft: #262247;
+  --accent-deep: #d9d5fa;
+  --accent-line: #463f86;
+  --tip-accent: #5046c8;
+  --note-hover: #b3acf5;
   --shadow-rgb: 0, 0, 0;
   --backdrop: rgba(0, 0, 0, 0.62);
 }
@@ -81,6 +81,19 @@ body {
 }
 .brand h1 { margin: 0; font-family: var(--serif); font-weight: 700; font-size: 26px; letter-spacing: -0.01em; }
 .brand p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+
+/* ---- companion link (next to the theme toggle) ---- */
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.site-link {
+  display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink); text-decoration: none;
+  font: 600 13px/1 var(--sans); box-shadow: 0 1px 3px rgba(var(--shadow-rgb), 0.12); transition: background .15s, border-color .15s;
+}
+.site-link:hover { background: var(--hover); border-color: var(--accent); }
+.site-link svg { width: 16px; height: 16px; color: var(--accent); }
+.site-link .lnk-short { display: none; }
+@media (max-width: 560px) { .site-link .lnk-long { display: none; } .site-link .lnk-short { display: inline; } .site-link { padding: 0 10px; } }
+@media print { .top-actions { display: none !important; } }
 
 /* ---- theme toggle ---- */
 .theme-btn {
@@ -398,8 +411,9 @@ kbd { font: 11px/1 var(--sans); border: 1px solid var(--line); border-bottom-wid
 .abcjs-chord { font-weight: 600; }
 .sheet .abcjs-note, .sheet .abcjs-rest { cursor: pointer; }
 .sheet .abcjs-note:hover * { fill: var(--note-hover); }
+.note-name { font: 600 7.5px var(--sans); fill: currentColor; opacity: 0.6; pointer-events: none; }
 .abcjs-highlight, .abcjs-highlight * { fill: var(--accent) !important; }
-.abcjs-highlight.abcjs-note { filter: drop-shadow(0 0 3px rgba(47, 95, 168, 0.5)); }
+.abcjs-highlight.abcjs-note { filter: drop-shadow(0 0 3px rgba(80, 70, 200, 0.5)); }
 
 /* ---- responsive ---- */
 @media (max-width: 960px) {
