@@ -90,14 +90,19 @@ const Patterns = (() => {
       case 'H': return [root + third];
       case 'V': return [bass, bass + 12];
       case 'C': return upper(chord, ivs.length >= 4 ? ivs.slice(1, 4) : ivs.slice(0, 3));
-      case 'B': return [bass, ...upper(chord, ivs.slice(0, Math.min(4, ivs.length)))];
+      case 'B': {
+        // Bass note plus the other chord tones packed just above it (up to four notes).
+        const rest = ivs.filter(iv => mod(chord.root + iv, 12) !== mod(bassPc, 12)).slice(0, 3)
+          .sort((x, y) => mod(chord.root + x - bassPc, 12) - mod(chord.root + y - bassPc, 12)); // nearest above the bass first
+        return [bass, ...upper(chord, rest, bass + 1)];
+      }
       default: return [bass];
     }
   }
-  function upper(chord, intervals) {
+  function upper(chord, intervals, minPitch = 48) {
     let prev = null; const out = [];
     for (const iv of intervals) {
-      let m = 48 + mod(chord.root + iv - 48, 12);   // lowest tone at or above C3
+      let m = minPitch + mod(chord.root + iv - minPitch, 12);   // lowest tone at or above minPitch (C3 by default)
       if (prev !== null && m <= prev) m += 12;
       out.push(m); prev = m;
     }
