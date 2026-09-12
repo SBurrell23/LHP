@@ -309,8 +309,8 @@
     if (elems.length !== events.length) return []; // don't guess if the counts disagree
     return elems.map((el, i) => ({ el, event: events[i] }));
   }
-  // Chroma-Notes colours by letter name (accidentals share their letter's colour).
-  const NOTE_COLORS = { C: '#e5383b', D: '#f48c06', E: '#d9b514', F: '#2a9d8f', G: '#1b9aaa', A: '#3a6ff7', B: '#9d4edd' };
+  // Colours by letter name (accidentals share their letter's colour).
+  const NOTE_COLORS = { C: '#2f6fed', D: '#f48c06', E: '#e0b400', F: '#ec4899', G: '#22a06b', A: '#e5383b', B: '#8b5cf6' };
   const colorOf = name => NOTE_COLORS[name.charAt(0)] || 'currentColor';
   const colorsOn = () => $('colors-on').getAttribute('aria-pressed') === 'true';
 
